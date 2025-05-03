@@ -6,7 +6,7 @@ pipeline {
     }
 
     environment {
-        DOCKER_REGISTRY_CREDENTIALS = credentials('docker-hub-token')  // or your UUID
+        DOCKER_REGISTRY_CREDENTIALS = credentials('ca43f1a1-4472-4147-aeda-cca85209efce')  // or your UUID
         DOCKER_IMAGE = 'yasir1510/nodeimage'
         DOCKER_TAG = 'latest'
         DOCKER_REGISTRY_URL = 'https://index.docker.io/v1/'
