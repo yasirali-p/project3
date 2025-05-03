@@ -34,15 +34,17 @@ pipeline {
 
         stage('Build and Push Docker Image') {
             steps {
-                withCredentials([usernamePassword(
-                    credentialsId: 'ca43f1a1-4472-4147-aeda-cca85209efce', usernameVariable: 'yasir1510', passwordVariable: 'yasir@1510)]
-                    usernameVariable: 'DOCKERHUB_USERNAME',
-                    passwordVariable: 'DOCKERHUB_PASSWORD'
-                )]) {
-                    script {
-                        sh "echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin"
-                        sh "docker build -t yasir1510/nodeimage:latest ."
-                        sh "docker push yasir1510/nodeimage:latest"
+                script {
+                    withCredentials([usernamePassword(
+                        credentialsId: 'ca43f1a1-4472-4147-aeda-cca85209efce',
+                        usernameVariable: 'DOCKERHUB_USERNAME',
+                        passwordVariable: 'DOCKERHUB_PASSWORD'
+                    )]) {
+                        sh """
+                            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+                            docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
+                            docker push $DOCKER_IMAGE:$DOCKER_TAG
+                        """
                     }
                 }
             }
@@ -66,3 +68,4 @@ pipeline {
         }
     }
 }
+
