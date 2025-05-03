@@ -1,70 +1,64 @@
 pipeline {
-    agent {
-        docker {
-            image 'node:18'
-            args '-v /var/run/docker.sock:/var/run/docker.sock'  // Mount Docker socket
-        }
-    }
+    agent any
 
     environment {
-        DOCKER_IMAGE = 'yasir1510/nodeimage'
-        DOCKER_TAG = 'latest'
-        NPM_CONFIG_CACHE = './.npm-cache'
+        DOCKER_IMAGE = "yasir1510/nodeimage:latest"
+        DOCKER_HUB_CREDENTIALS = 'ca43f1a1-4472-4147-aeda-cca85209efce'   // Jenkins credential ID for DockerHub (username+token)
+        GITHUB_CREDENTIALS = '068f6da2-eafc-4c90-a4f6-1f3ba3d27b38'           // Jenkins credential ID for GitHub (no password)
     }
 
     stages {
         stage('Checkout') {
             steps {
-                git branch: 'main', url: 'https://github.com/yasirali-p/project3.git'
+                git credentialsId: "${GITHUB_CREDENTIALS}", url: 'git@github.com:yasirali-p/project3.git'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'mkdir -p .npm-cache'
                 sh 'npm install'
             }
         }
 
-        stage('Test') {
+        stage('Run Tests') {
             steps {
                 sh 'npm test'
             }
         }
 
-        stage('Build and Push Docker Image') {
+        stage('Build Docker Image') {
             steps {
-                script {
-                    withCredentials([usernamePassword(
-                        credentialsId: 'ca43f1a1-4472-4147-aeda-cca85209efce',
-                        usernameVariable: 'DOCKERHUB_USER',
-                        passwordVariable: 'DOCKERHUB_PASS'
-                    )]) {
-                        sh '''
-                            docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS
-                            docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
-                            docker push $DOCKER_IMAGE:$DOCKER_TAG
-                        '''
-                    }
+                sh "docker build -t yasir1510/nodeimage:latest ."
+            }
+        }
+
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: "ca43f1a1-4472-4147-aeda-cca85209efce", usernameVariable: 'yasir1510', passwordVariable: 'yasir@1510')]) {
+                    sh '''
+                        echo "$DOCKER_TOKEN" | docker login -u "$yasir1510" --password-stdin
+                        docker push yasir1510/nodeimage:latest
+                    '''
                 }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'kubectl apply -f k8s/deployment.yml'
-                sh 'kubectl apply -f k8s/service.yml'
-                sh 'kubectl rollout status deployment/node-app'
-                sh 'kubectl apply -f k8s/canary-deployment.yml'
-                sh 'kubectl rollout status deployment/node-app-canary'
+                sh '''
+                    kubectl apply -f k8s/deployment.yml
+                    kubectl apply -f k8s/service.yml
+                '''
             }
         }
+    }
 
-        stage('Monitor Deployment') {
-            steps {
-                sh 'kubectl apply -f monitoring.yml'
-                sh 'kubectl get pods -n monitoring'
-            }
+    post {
+        success {
+            echo 'Deployment successful.'
+        }
+        failure {
+            echo 'Build or deployment failed.'
         }
     }
 }
