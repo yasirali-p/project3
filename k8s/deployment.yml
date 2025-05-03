@@ -2,8 +2,15 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: node-app
+  labels:
+    app: node-app
 spec:
-  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  replicas: 3
   selector:
     matchLabels:
       app: node-app
@@ -11,12 +18,13 @@ spec:
     metadata:
       labels:
         app: node-app
+        track: stable
     spec:
       containers:
       - name: my-node-app
-        image: localhost/my-node-app:latest 
+        image: yasir1510/nodeimage:latest 
         ports:
-        - containerPort: 5000
+        - containerPort: 3000
   strategy:
     canary:
       steps:
@@ -25,16 +33,3 @@ spec:
         - setWeight: 50
         - pause: { duration: 30s }
         - setWeight: 100
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: node-app-service
-spec:
-  selector:
-    app: node-app
-  ports:
-    - protocol: TCP
-      port: 80
-      targetPort: 5000
-  type: LoadBalancer

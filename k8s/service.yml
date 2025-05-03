@@ -7,6 +7,6 @@ spec:
   selector:
     app: node-app
   ports:
-    - port: 5000
-      targetPort: 5000
-      nodePort: 30007
+    - protocol: tcp
+      port: 80
+      targetPort: 3000
