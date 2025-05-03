@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'node:18'  // Or another version as needed
+            image 'node:18'
         }
     }
 
@@ -9,6 +9,7 @@ pipeline {
         DOCKER_REGISTRY_CREDENTIALS = credentials('ca43f1a1-4472-4147-aeda-cca85209efce')
         DOCKER_IMAGE = 'yasir1510/nodeimage'
         DOCKER_TAG = 'latest'
+        NPM_CONFIG_CACHE = './.npm-cache'
     }
 
     stages {
@@ -20,6 +21,7 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
+                sh 'mkdir -p .npm-cache'
                 sh 'npm install'
             }
         }
