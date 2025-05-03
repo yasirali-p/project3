@@ -6,7 +6,6 @@ pipeline {
     }
 
     environment {
-        DOCKER_REGISTRY_CREDENTIALS = credentials('ca43f1a1-4472-4147-aeda-cca85209efce')  // or your UUID
         DOCKER_IMAGE = 'yasir1510/nodeimage'
         DOCKER_TAG = 'latest'
         DOCKER_REGISTRY_URL = 'https://index.docker.io/v1/'
@@ -14,7 +13,7 @@ pipeline {
     }
 
     stages {
-        stage('Checkout from GitHub') {
+        stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/yasirali-p/project3.git'
             }
@@ -27,7 +26,7 @@ pipeline {
             }
         }
 
-        stage('Run Tests') {
+        stage('Test') {
             steps {
                 sh 'npm test'
             }
@@ -35,10 +34,15 @@ pipeline {
 
         stage('Build and Push Docker Image') {
             steps {
-                script {
-                    docker.withRegistry(DOCKER_REGISTRY_URL, DOCKER_REGISTRY_CREDENTIALS) {
-                        def customImage = docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
-                        customImage.push()
+                withCredentials([usernamePassword(
+                    credentialsId: 'docker-hub-token',  // Must match Jenkins credentials ID
+                    usernameVariable: 'DOCKERHUB_USERNAME',
+                    passwordVariable: 'DOCKERHUB_PASSWORD'
+                )]) {
+                    script {
+                        sh "echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin"
+                        sh "docker build -t $DOCKER_IMAGE:$DOCKER_TAG ."
+                        sh "docker push $DOCKER_IMAGE:$DOCKER_TAG"
                     }
                 }
             }
@@ -46,24 +50,19 @@ pipeline {
 
         stage('Deploy to Kubernetes') {
             steps {
-                script {
-                    sh 'kubectl apply -f k8s/deployment.yml'
-                    sh 'kubectl apply -f k8s/service.yml'
-                    sh 'kubectl rollout status deployment/node-app'
-                    sh 'kubectl apply -f k8s/canary-deployment.yml'
-                    sh 'kubectl rollout status deployment/node-app-canary'
-                }
+                sh 'kubectl apply -f k8s/deployment.yml'
+                sh 'kubectl apply -f k8s/service.yml'
+                sh 'kubectl rollout status deployment/node-app'
+                sh 'kubectl apply -f k8s/canary-deployment.yml'
+                sh 'kubectl rollout status deployment/node-app-canary'
             }
         }
 
         stage('Monitor Deployment') {
             steps {
-                script {
-                    sh 'kubectl apply -f monitoring.yml'
-                    sh 'kubectl get pods -n monitoring'
-                }
+                sh 'kubectl apply -f monitoring.yml'
+                sh 'kubectl get pods -n monitoring'
             }
         }
     }
 }
-
