@@ -1,7 +1,6 @@
 pipeline {
     agent any
 
-<<<<<<< HEAD
     environment {
         DOCKER_REGISTRY_CREDENTIALS = credentials('ca43f1a1-4472-4147-aeda-cca85209efce')
         DOCKER_IMAGE = 'yasir1510/nodeimage'
