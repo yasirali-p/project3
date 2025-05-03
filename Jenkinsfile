@@ -6,9 +6,10 @@ pipeline {
     }
 
     environment {
-        DOCKER_REGISTRY_CREDENTIALS = credentials('ca43f1a1-4472-4147-aeda-cca85209efce')
+        DOCKER_REGISTRY_CREDENTIALS = credentials('docker-hub-token')  // or your UUID
         DOCKER_IMAGE = 'yasir1510/nodeimage'
         DOCKER_TAG = 'latest'
+        DOCKER_REGISTRY_URL = 'https://docker.io/yasir1510/nodeimage:latest'
         NPM_CONFIG_CACHE = './.npm-cache'
     }
 
@@ -35,7 +36,7 @@ pipeline {
         stage('Build and Push Docker Image') {
             steps {
                 script {
-                    docker.withRegistry('https://registry.hub.docker.com', 'docker-hub-token') {
+                    docker.withRegistry(DOCKER_REGISTRY_URL, DOCKER_REGISTRY_CREDENTIALS) {
                         def customImage = docker.build("${DOCKER_IMAGE}:${DOCKER_TAG}")
                         customImage.push()
                     }
@@ -65,3 +66,4 @@ pipeline {
         }
     }
 }
+
