@@ -35,9 +35,9 @@ pipeline {
         stage('Build and Push Docker Image') {
             steps {
                 withCredentials([usernamePassword(
-                    credentialsId: 'docker-hub-token',  // Must match Jenkins credentials ID
-                    usernameVariable: 'DOCKERHUB_USERNAME',
-                    passwordVariable: 'DOCKERHUB_PASSWORD'
+                    credentialsId: 'ca43f1a1-4472-4147-aeda-cca85209efce',  // Must match Jenkins credentials ID
+                    usernameVariable: 'yasir1510',
+                    passwordVariable: 'yasir@1510'
                 )]) {
                     script {
                         sh "echo $DOCKERHUB_PASSWORD | docker login -u $DOCKERHUB_USERNAME --password-stdin"
