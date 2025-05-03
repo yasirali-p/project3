@@ -2,13 +2,13 @@ pipeline {
     agent {
         docker {
             image 'node:18'
+            args '-v /var/run/docker.sock:/var/run/docker.sock'  // Mount Docker socket
         }
     }
 
     environment {
         DOCKER_IMAGE = 'yasir1510/nodeimage'
         DOCKER_TAG = 'latest'
-        DOCKER_REGISTRY_URL = 'https://index.docker.io/v1/'
         NPM_CONFIG_CACHE = './.npm-cache'
     }
 
@@ -37,14 +37,14 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(
                         credentialsId: 'ca43f1a1-4472-4147-aeda-cca85209efce',
-                        usernameVariable: 'yasir1510',
-                        passwordVariable: 'yasir@150'
+                        usernameVariable: 'DOCKERHUB_USER',
+                        passwordVariable: 'DOCKERHUB_PASS'
                     )]) {
-                        sh """
-                            echo "$DOCKERHUB_PASSWORD" | docker login -u "$DOCKERHUB_USERNAME" --password-stdin
+                        sh '''
+                            docker login -u $DOCKERHUB_USER -p $DOCKERHUB_PASS
                             docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
                             docker push $DOCKER_IMAGE:$DOCKER_TAG
-                        """
+                        '''
                     }
                 }
             }
