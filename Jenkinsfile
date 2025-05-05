@@ -1,18 +1,19 @@
 pipeline {
     agent {
         docker {
-            image 'cibuilds/docker:18.09-node'
+            image 'yasir1510/nodeimage:latest'
             args '-v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
 
     environment {
-        IMAGE_NAME = 'yasir1510/nodeimage:latest'
-        DOCKER_HUB_CREDENTIALS = 'ca43f1a1-4472-4147-aeda-cca85209efce'
+        DOCKER_IMAGE = 'yasir1510/nodeimage'
+        DOCKER_TAG = 'latest'
+        NPM_CONFIG_CACHE = './.npm-cache'
     }
 
     stages {
-        stage('Clone Repository') {
+        stage('Checkout') {
             steps {
                 git branch: 'main', url: 'https://github.com/yasirali-p/project3.git'
             }
@@ -20,57 +21,64 @@ pipeline {
 
         stage('Install Dependencies') {
             steps {
+                sh 'mkdir -p .npm-cache'
                 sh 'npm install'
             }
         }
 
-        stage('Run Tests') {
+        stage('Test') {
             steps {
                 sh 'npm test'
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Build and Push Docker Image') {
             steps {
-                sh "docker build -t yasir1510/node-app:latest ."
-            }
-        }
+                script {
+                    withCredentials([usernamePassword(
+                        credentialsId: 'ca43f1a1-4472-4147-aeda-cca85209efce',
+                        usernameVariable: 'yasir1510',
+                        passwordVariable: 'yasir@1510'
+                    )]) {
+                        sh """
+                            echo "Logging into Docker Hub..."
+                            docker login -u yasir1510 -p yasir@1510
 
-        stage('Push to Docker Hub') {
-            steps {
-                withCredentials([usernamePassword(credentialsId: "ca43f1a1-4472-4147-aeda-cca85209efce'", usernameVariable: 'yasir1510', passwordVariable: 'yasir@1510')]) {
-                    sh '''
-                        echo "$DOCKER_PASS" | docker login -u "yasir1510" --password-stdin
-                        docker push yasir1510/node-app:latest
-                    '''
+                            echo "Building Docker image..."
+                            docker build -t yasir1510/node-app:latest .
+
+                            echo "Pushing Docker image..."
+                            docker push yasir1510/node-app:latest
+                        """
+                    }
                 }
             }
         }
 
-        stage('Deploy to Local Kubernetes') {
+        stage('Deploy to Kubernetes') {
             steps {
-                sh '''
-                    kubectl apply -f k8s/deployment.yml
-                    kubectl apply -f k8s/canary-deployment.yml
-                    kubectl apply -f k8s/service.yml
-                '''
+                sh 'kubectl apply -f k8s/deployment.yml'
+                sh 'kubectl apply -f k8s/service.yml'
+                sh 'kubectl rollout status deployment/node-app'
+                sh 'kubectl apply -f k8s/canary-deployment.yml'
+                sh 'kubectl rollout status deployment/node-app-canary'
             }
         }
 
-        stage('Verify Deployment') {
+        stage('Monitor Deployment') {
             steps {
-                sh 'kubectl get pods -l app=node-app'
-                sh 'kubectl get svc node-app-service'
+                sh 'kubectl apply -f monitoring.yml'
+                sh 'kubectl get pods'
             }
         }
     }
 
     post {
         success {
-            echo '✅ Deployment completed successfully.'
+            echo '✅ CI/CD Pipeline completed successfully.'
         }
         failure {
-            echo '❌ Pipeline failed.'
+            echo '❌ CI/CD Pipeline failed.'
         }
     }
 }
