@@ -1,8 +1,8 @@
 pipeline {
-    agent any  // Use the Jenkins host directly — Docker and Node.js must be installed on the host
+    agent any  // This uses the Jenkins host directly — must have Node.js and Docker installed
 
     environment {
-        IMAGE_NAME = 'yasir1510/node-image:latest'
+        IMAGE_NAME = 'yasir1510/nodeimage:latest'
         DOCKER_HUB_CREDENTIALS = 'ca43f1a1-4472-4147-aeda-cca85209efce'
     }
 
@@ -27,7 +27,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t yasir1510/node-image ."
+                sh "docker build -t yasir1510/nodeimage:latest ."
             }
         }
 
@@ -36,7 +36,7 @@ pipeline {
                 withCredentials([usernamePassword(credentialsId: "ca43f1a1-4472-4147-aeda-cca85209efce", usernameVariable: 'yasir1510', passwordVariable: 'yasir@1510')]) {
                     sh '''
                         echo "yasir@1510" | docker login -u "yasir1510" --password-stdin
-                        docker push yasir1510/node-image
+                        docker push yasir1510/nodeimage:latest
                     '''
                 }
             }
