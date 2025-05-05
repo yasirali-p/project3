@@ -10,6 +10,8 @@ pipeline {
         DOCKER_IMAGE = 'yasir1510/nodeimage'
         DOCKER_TAG = 'latest'
         NPM_CONFIG_CACHE = './.npm-cache'
+        DOCKERHUB_USER = 'yasir1510'
+        DOCKERHUB_PASS = 'yasir@1510'
     }
 
     stages {
@@ -37,8 +39,8 @@ pipeline {
                 script {
                     withCredentials([usernamePassword(
                         credentialsId: 'ca43f1a1-4472-4147-aeda-cca85209efce',
-                        usernameVariable: 'yasir1510',
-                        passwordVariable: 'yasir@1510'
+                        usernameVariable: 'DOCKERHUB_USER',
+                        passwordVariable: 'DOCKERHUB_PASS'                        
                     )]) {
                         sh """
                             echo "Logging into Docker Hub..."
