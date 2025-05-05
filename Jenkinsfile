@@ -1,8 +1,8 @@
 pipeline {
     agent {
         docker {
-            image 'node:18' // Uses official Node.js Docker image
-            args '-u root'  // Optional: runs container as root user
+            image 'docker:19' // Use Docker image that has Docker CLI installed
+            args '-v /var/run/docker.sock:/var/run/docker.sock' // Mount Docker socket for Docker-in-Docker
         }
     }
 
@@ -32,16 +32,16 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t ${IMAGE_NAME} ."
+                sh "docker build -t yasir1510/node-app:latest ."
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${DOCKER_HUB_CREDENTIALS}", usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+                withCredentials([usernamePassword(credentialsId: "ca43f1a1-4472-4147-aeda-cca85209efce'", usernameVariable: 'yasir1510', passwordVariable: 'yasir@1510')]) {
                     sh '''
-                        echo "$DOCKER_PASS" | docker login -u "$DOCKER_USER" --password-stdin
-                        docker push ${IMAGE_NAME}
+                        echo "$DOCKER_PASS" | docker login -u "yasir1510" --password-stdin
+                        docker push yasir1510/node-app:latest
                     '''
                 }
             }
