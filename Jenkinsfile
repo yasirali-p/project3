@@ -1,29 +1,21 @@
 pipeline {
-    agent {
-        docker {
-            image 'yasir1510/nodeimage:latest'
-            args '-v /var/run/docker.sock:/var/run/docker.sock' // Mount Docker socket
-        }
-    }
+    agent any
 
     environment {
+        DOCKER_HUB_CREDENTIALS = 'ca43f1a1-4472-4147-aeda-cca85209efce' // Jenkins credentials ID
         DOCKER_IMAGE = 'yasir1510/nodeimage'
-        DOCKER_TAG = 'latest'
-        NPM_CONFIG_CACHE = './.npm-cache'
-        DOCKERHUB_USER = 'yasir1510'
-        DOCKERHUB_PASS = 'yasir@1510'
+        GIT_BRANCH = 'main'
     }
 
     stages {
-        stage('Checkout') {
+        stage('Clone Repository') 
             steps {
-                git branch: 'main', url: 'https://github.com/yasirali-p/project3.git'
+                git branch: "main", url: 'https://github.com/yasirali-p/project3.git', credentialsId: '068f6da2-eafc-4c90-a4f6-1f3ba3d27b38'
             }
         }
 
         stage('Install Dependencies') {
             steps {
-                sh 'mkdir -p .npm-cache'
                 sh 'npm install'
             }
         }
@@ -34,43 +26,53 @@ pipeline {
             }
         }
 
-        stage('Build and Push Docker Image') {
+        // ✅ NEW: Build stage (for future extensibility)
+        stage('index.js Build') {
             steps {
-                script {
-                    withCredentials([usernamePassword(
-                        credentialsId: 'ca43f1a1-4472-4147-aeda-cca85209efce',
-                        usernameVariable: 'DOCKERHUB_USER',
-                        passwordVariable: 'DOCKERHUB_PASS'                        
-                    )]) {
-                        sh """
-                            echo "Logging into Docker Hub..."
-                            docker login -u $DOCKER_USER -p $DOCKER_PASS
+                echo 'No build step required for index.js - using plain Node.js'
+                // If using TypeScript or Babel, compile here
+            }
+        }
 
-                            echo "Building Docker image..."
-                            docker build -t $DOCKER_IMAGE:$DOCKER_TAG .
+        stage('Build Docker Image') {
+            steps {
+                sh "docker build -t yasir1510/nodeimage:latest ."
+            }
+        }
 
-                            echo "Pushing Docker image..."
-                            docker push $DOCKER_IMAGE:$DOCKER_TAG
-                        """
-                    }
+        stage('Push to Docker Hub') {
+            steps {
+                withCredentials([usernamePassword(credentialsId: 'ca43f1a1-4472-4147-aeda-cca85209efce', passwordVariable: 'yasir@1510', usernameVariable: 'yasir1510')]) {
+                    sh '''
+                        echo yasir@1510 | docker login -u yasir1510 --password-stdin
+                        docker push yasir1510/nodeimage:latest
+                    '''
                 }
             }
         }
 
         stage('Deploy to Kubernetes') {
             steps {
-                sh 'kubectl apply -f k8s/deployment.yml'
-                sh 'kubectl apply -f k8s/service.yml'
-                sh 'kubectl rollout status deployment/node-app'
-                sh 'kubectl apply -f k8s/canary-deployment.yml'
-                sh 'kubectl rollout status deployment/node-app-canary'
+                script {
+                    sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config && kubectl apply -f deployment.yaml'
+                    sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config && kubectl apply -f service.yaml'
+                }
             }
         }
 
-        stage('Monitor Deployment') {
+        stage('Canary Deployment') {
             steps {
-                sh 'kubectl apply -f monitoring.yml'
-                sh 'kubectl get pods -n monitoring'
+                script {
+                    sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config && kubectl apply -f canary.yaml'
+                }
+            }
+        }
+
+        stage('Rolling Update') {
+            steps {
+                script {
+                    sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config && kubectl apply -f rolling.yaml'
+                }
             }
         }
     }
