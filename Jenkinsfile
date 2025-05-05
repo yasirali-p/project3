@@ -32,7 +32,7 @@ pipeline {
 
         stage('Build Docker Image') {
             steps {
-                sh "sudo docker build -t yasir1510/nodeimage:latest ."
+                sh "docker build -t yasir1510/nodeimage:latest ."
             }
         }
 
