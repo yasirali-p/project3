@@ -1,15 +1,20 @@
 pipeline {
-    agent any
+    agent {
+        docker {
+            image 'node:18' // Uses official Node.js Docker image
+            args '-u root'  // Optional: runs container as root user
+        }
+    }
 
     environment {
         IMAGE_NAME = 'yasir1510/nodeimage:latest'
-        DOCKER_HUB_CREDENTIALS = 'ca43f1a1-4472-4147-aeda-cca85209efce'  // Add this in Jenkins Credentials
+        DOCKER_HUB_CREDENTIALS = 'ca43f1a1-4472-4147-aeda-cca85209efce'
     }
 
     stages {
         stage('Clone Repository') {
             steps {
-                git branch: 'main', url: 'https://github.com/yasirali-p/project3.git' // <-- Replace with your Git repo
+                git branch: 'main', url: 'https://github.com/yasirali-p/project3.git'
             }
         }
 
@@ -33,7 +38,7 @@ pipeline {
 
         stage('Push to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: "${ca43f1a1-4472-4147-aeda-cca85209efce}", usernameVariable: 'yasir1510', passwordVariable: 'yasir@1510')]) {
+                withCredentials([usernamePassword(credentialsId: "ca43f1a1-4472-4147-aeda-cca85209efce", usernameVariable: 'yasir1510', passwordVariable: 'yasir@1510')]) {
                     sh '''
                         echo "yasir@1510" | docker login -u "yasir1510" --password-stdin
                         docker push ${IMAGE_NAME}
@@ -65,7 +70,7 @@ pipeline {
             echo '✅ Deployment completed successfully.'
         }
         failure {
-            echo '❌ Something went wrong during the pipeline.'
+            echo '❌ Pipeline failed.'
         }
     }
 }
