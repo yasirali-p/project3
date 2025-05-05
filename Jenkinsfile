@@ -9,7 +9,7 @@ pipeline {
     stages {
         stage('Clone Repository') {
             steps {
-                git 'https://github.com/yasirali-p/project3.git' // <-- Replace with your Git repo
+                git branch: 'main', url: 'https://github.com/yasirali-p/project3.git' // <-- Replace with your Git repo
             }
         }
 
@@ -69,4 +69,3 @@ pipeline {
         }
     }
 }
-
