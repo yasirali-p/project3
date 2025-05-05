@@ -2,15 +2,14 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_HUB_CREDENTIALS = 'ca43f1a1-4472-4147-aeda-cca85209efce' // Jenkins credentials ID
-        DOCKER_IMAGE = 'yasir1510/nodeimage'
-        GIT_BRANCH = 'main'
+        IMAGE_NAME = 'yasir1510/nodeimage:latest'
+        DOCKER_HUB_CREDENTIALS = 'ca43f1a1-4472-4147-aeda-cca85209efce'  // Add this in Jenkins Credentials
     }
 
     stages {
-        stage('Clone Repository') 
+        stage('Clone Repository') {
             steps {
-                git branch: "main", url: 'https://github.com/yasirali-p/project3.git', credentialsId: '068f6da2-eafc-4c90-a4f6-1f3ba3d27b38'
+                git 'https://github.com/yasirali-p/project3.git' // <-- Replace with your Git repo
             }
         }
 
@@ -20,60 +19,54 @@ pipeline {
             }
         }
 
-        stage('Test') {
+        stage('Run Tests') {
             steps {
                 sh 'npm test'
             }
         }
 
-        // ✅ NEW: Build stage (for future extensibility)
-        stage('index.js Build') {
-            steps {
-                echo 'No build step required for index.js - using plain Node.js'
-                // If using TypeScript or Babel, compile here
-            }
-        }
-
         stage('Build Docker Image') {
             steps {
-                sh "docker build -t yasir1510/nodeimage:latest ."
+                sh "docker build -t ${IMAGE_NAME} ."
             }
         }
 
         stage('Push to Docker Hub') {
             steps {
-                withCredentials([usernamePassword(credentialsId: 'ca43f1a1-4472-4147-aeda-cca85209efce', passwordVariable: 'yasir@1510', usernameVariable: 'yasir1510')]) {
+                withCredentials([usernamePassword(credentialsId: "${ca43f1a1-4472-4147-aeda-cca85209efce}", usernameVariable: 'yasir1510', passwordVariable: 'yasir@1510')]) {
                     sh '''
-                        echo yasir@1510 | docker login -u yasir1510 --password-stdin
-                        docker push yasir1510/nodeimage:latest
+                        echo "yasir@1510" | docker login -u "yasir1510" --password-stdin
+                        docker push ${IMAGE_NAME}
                     '''
                 }
             }
         }
 
-        stage('Deploy to Kubernetes') {
+        stage('Deploy to Local Kubernetes') {
             steps {
-                script {
-                    sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config && kubectl apply -f deployment.yaml'
-                    sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config && kubectl apply -f service.yaml'
-                }
+                sh '''
+                    kubectl apply -f k8s/deployment.yml
+                    kubectl apply -f k8s/canary-deployment.yml
+                    kubectl apply -f k8s/service.yml
+                '''
             }
         }
 
-        stage('Canary Deployment') {
+        stage('Verify Deployment') {
             steps {
-                script {
-                    sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config && kubectl apply -f canary.yaml'
-                }
-            }
-        }
-
-        stage('Rolling Update') {
-            steps {
-                script {
-                    sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config && kubectl apply -f rolling.yaml'
-                }
+                sh 'kubectl get pods -l app=node-app'
+                sh 'kubectl get svc node-app-service'
             }
         }
     }
+
+    post {
+        success {
+            echo '✅ Deployment completed successfully.'
+        }
+        failure {
+            echo '❌ Something went wrong during the pipeline.'
+        }
+    }
 }
+
