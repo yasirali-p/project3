@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'node:18'
+            image 'yasir1510/nodeimage:latest'
             args '-v /var/run/docker.sock:/var/run/docker.sock'  // Mount Docker socket
         }
     }
@@ -68,4 +68,3 @@ pipeline {
         }
     }
 }
-
