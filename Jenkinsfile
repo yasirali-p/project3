@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'yasir1510/nodeimage:latest'
+            image 'docker:20.10.16-cli' // Includes Docker CLI
             args '-v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
@@ -20,6 +20,11 @@ pipeline {
         }
 
         stage('Install Dependencies') {
+            agent {
+                docker {
+                    image 'node:18' // Switch to a Node image just for this step
+                }
+            }
             steps {
                 sh 'mkdir -p .npm-cache'
                 sh 'npm install'
@@ -27,6 +32,11 @@ pipeline {
         }
 
         stage('Test') {
+            agent {
+                docker {
+                    image 'node:18'
+                }
+            }
             steps {
                 sh 'npm test'
             }
@@ -34,23 +44,16 @@ pipeline {
 
         stage('Build and Push Docker Image') {
             steps {
-                script {
-                    withCredentials([usernamePassword(
-                        credentialsId: 'ca43f1a1-4472-4147-aeda-cca85209efce',
-                        usernameVariable: 'yasir1510',
-                        passwordVariable: 'yasir@1510'
-                    )]) {
-                        sh """
-                            echo "Logging into Docker Hub..."
-                            docker login -u yasir1510 -p yasir@1510
-
-                            echo "Building Docker image..."
-                            docker build -t yasir1510/node-app:latest .
-
-                            echo "Pushing Docker image..."
-                            docker push yasir1510/node-app:latest
-                        """
-                    }
+                withCredentials([usernamePassword(
+                    credentialsId: 'ca43f1a1-4472-4147-aeda-cca85209efce',
+                    usernameVariable: 'yasir1510',
+                    passwordVariable: 'yasir@1510'
+                )]) {
+                    sh """
+                        echo "yasir@1510" | docker login -u "yasir1510" --password-stdin
+                        docker build -t yasir1510/node-app:latest .
+                        docker push yasir1510/node-app:latest
+                    """
                 }
             }
         }
@@ -82,3 +85,4 @@ pipeline {
         }
     }
 }
+
