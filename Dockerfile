@@ -1,21 +1,19 @@
-# Base image with Node.js
 FROM node:18
 
-# Install Docker CLI
-RUN apt-get update && \
-    apt-get install -y docker.io && \
-    rm -rf /var/lib/apt/lists/*
-
-# Set working directory
+# Create and set working directory
 WORKDIR /usr/src/app
 
-# Copy files and install dependencies
+# Copy package files first for better layer caching
 COPY package*.json ./
+
+# Install dependencies
 RUN npm install
+
+# Copy the rest of the application
 COPY . .
 
-# Expose app port
+# Expose the correct port (matches your app.js)
 EXPOSE 3000
 
-# Run app
+# Command to run the application
 CMD ["node", "app.js"]

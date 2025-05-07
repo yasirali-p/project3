@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_IMAGE = 'yasir1510/nodeimage'
+        DOCKER_IMAGE = 'yasir1510/node-app'
         DOCKER_TAG = 'latest'
         NPM_CONFIG_CACHE = './.npm-cache'
     }
