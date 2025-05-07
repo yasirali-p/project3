@@ -1,7 +1,7 @@
 pipeline {
     agent {
         docker {
-            image 'docker:20.10.16-cli' // Includes Docker CLI
+            image 'docker:20.10.16' // Valid Docker CLI image
             args '-v /var/run/docker.sock:/var/run/docker.sock'
         }
     }
@@ -22,7 +22,7 @@ pipeline {
         stage('Install Dependencies') {
             agent {
                 docker {
-                    image 'node:18' // Switch to a Node image just for this step
+                    image 'node:18' // Valid Node.js image
                 }
             }
             steps {
@@ -77,11 +77,8 @@ pipeline {
     }
 
     post {
-        success {
-            echo '✅ CI/CD Pipeline completed successfully.'
-        }
         failure {
-            echo '❌ CI/CD Pipeline failed.'
+            echo "❌ CI/CD Pipeline failed."
         }
     }
 }
