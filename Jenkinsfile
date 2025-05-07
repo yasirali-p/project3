@@ -17,7 +17,7 @@ pipeline {
     stage('Build Docker Image') {
       steps {
         script {
-          docker.build("${IMAGE_NAME}:latest", './node-app')
+          docker.build("yasir1510/node-app:latest", './node-app')
         }
       }
     }
@@ -33,7 +33,7 @@ pipeline {
         ]) {
           script {
             docker.withRegistry('', "${DOCKER_CREDENTIALS_ID}") {
-              docker.image("${IMAGE_NAME}:latest").push()
+              docker.image("yasir1510/node-app:latest").push()
             }
           }
         }
