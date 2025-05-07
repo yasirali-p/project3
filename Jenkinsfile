@@ -1,10 +1,5 @@
 pipeline {
-    agent {
-        docker {
-            image 'docker:20.10.16' // Valid Docker CLI image
-            args '-v /var/run/docker.sock:/var/run/docker.sock'
-        }
-    }
+    agent any
 
     environment {
         DOCKER_IMAGE = 'yasir1510/nodeimage'
@@ -22,7 +17,8 @@ pipeline {
         stage('Install Dependencies') {
             agent {
                 docker {
-                    image 'node:18' // Valid Node.js image
+                    image 'node:18'
+                    args '-v $HOME/.npm:/root/.npm'
                 }
             }
             steps {
@@ -43,22 +39,31 @@ pipeline {
         }
 
         stage('Build and Push Docker Image') {
+            agent {
+                docker {
+                    image 'docker:20.10.16-dind' // Docker-in-Docker
+                    args '--privileged -v /var/run/docker.sock:/var/run/docker.sock'
+                }
+            }
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'ca43f1a1-4472-4147-aeda-cca85209efce',
                     usernameVariable: 'yasir1510',
                     passwordVariable: 'yasir@1510'
                 )]) {
-                    sh """
+                    sh '''
                         echo "yasir@1510" | docker login -u "yasir1510" --password-stdin
                         docker build -t yasir1510/node-app:latest .
                         docker push yasir1510/node-app:latest
-                    """
+                    '''
                 }
             }
         }
 
         stage('Deploy to Kubernetes') {
+            environment {
+                KUBECONFIG = '/home/jenkins/.kube/config'
+            }
             steps {
                 sh 'kubectl apply -f k8s/deployment.yml'
                 sh 'kubectl apply -f k8s/service.yml'
@@ -78,8 +83,7 @@ pipeline {
 
     post {
         failure {
-            echo "❌ CI/CD Pipeline failed."
+            echo '❌ CI/CD Pipeline failed.'
         }
     }
 }
-
