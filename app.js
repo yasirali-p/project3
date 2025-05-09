@@ -2,26 +2,32 @@ const express = require('express');
 const app = express();
 const port = process.env.PORT || 3000;
 
+// Middleware to parse JSON bodies
 app.use(express.json());
 
 // Basic route to respond to GET requests
 app.get('/', (req, res) => {
-  res.send('Hy, Hello,World,welcome node.js app!!!');
+  res.send('Hi, Hello World! Welcome to the Node.js app!');
 });
 
-// Example of a POST route
+// POST route example
 app.post('/data', (req, res) => {
   const data = req.body;
-  res.json({ message: 'Data received successfully', data });
+  res.status(200).json({
+    message: 'Data received successfully',
+    data: data
+  });
 });
 
-// Example of a dynamic route with parameters
+// Dynamic route with URL parameter
 app.get('/user/:id', (req, res) => {
   const userId = req.params.id;
-  res.json({ message: `User ID is: ${userId}` });
+  res.status(200).json({
+    message: `User ID is: ${userId}`
+  });
 });
 
 // Start the server
 app.listen(port, '0.0.0.0', () => {
-  console.log(`server running on port ${port}`);
+  console.log(`Server is running on port ${port}`);
 });
