@@ -42,7 +42,7 @@ pipeline {
 
     stage('Deploy to Kubernetes') {
       steps {
-        sh 'kubectl apply -f k8s/deployment.yaml'
+        sh 'kubectl apply -f project3/k8s/deployment.yaml'
         sh 'kubectl apply -f k8s/service.yaml'
         sh 'kubectl rollout status deployment/node-app'
         sh 'kubectl apply -f k8s/canary-deployment.yml'
