@@ -42,7 +42,10 @@ pipeline {
 
     stage('Deploy to Kubernetes') {
       steps {
-        // Ensure files exist and apply them
+        // List files in the Jenkins workspace
+        sh 'ls -R'
+
+        // Ensure the deployment file exists
         sh 'kubectl apply -f k8s/deployment.yaml'
         sh 'kubectl apply -f k8s/service.yaml'
         sh 'kubectl rollout status deployment/node-app'
