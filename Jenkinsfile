@@ -17,7 +17,7 @@ pipeline {
     stage('Build Docker Image') {
       steps {
         script {
-          docker.build("yasir1510/node-app:latest", './node-app')
+          docker.build("${IMAGE_NAME}:latest", './node-app')
         }
       }
     }
@@ -26,14 +26,14 @@ pipeline {
       steps {
         withCredentials([
           usernamePassword(
-            credentialsId: "ca43f1a1-4472-4147-aeda-cca85209efce",
-            usernameVariable: 'yasir1510',
-            passwordVariable: 'yasir@1510'
+            credentialsId: "${DOCKER_CREDENTIALS_ID}",
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASS'
           )
         ]) {
           script {
             docker.withRegistry('', "${DOCKER_CREDENTIALS_ID}") {
-              docker.image("yasir1510/node-app:latest").push()
+              docker.image("${IMAGE_NAME}:latest").push()
             }
           }
         }
@@ -43,9 +43,9 @@ pipeline {
     stage('Deploy to Kubernetes') {
       steps {
         sh 'kubectl apply -f k8s/deployment.yaml'
-        sh 'kubectl apply -f k8s/canary-deployment.yml'
         sh 'kubectl apply -f k8s/service.yaml'
         sh 'kubectl rollout status deployment/node-app'
+        sh 'kubectl apply -f k8s/canary-deployment.yml'
       }
     }
   }
