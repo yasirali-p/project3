@@ -23,5 +23,5 @@ app.get('/user/:id', (req, res) => {
 
 // Start the server
 app.listen(port, () => {
-  console.log(`Server is running on http://192.168.59.1:${port}`);
+  console.log(`Server is running on http://localhost:${port}`);
 });
