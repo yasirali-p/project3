@@ -42,8 +42,9 @@ pipeline {
 
     stage('Deploy to Kubernetes') {
       steps {
-        sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config && kubectl apply -f k8s/deployment.yaml'
-        sh 'export KUBECONFIG=/var/lib/jenkins/.kube/config && kubectl apply -f k8s/service.yaml'
+        // Ensure files exist and apply them
+        sh 'kubectl apply -f k8s/deployment.yaml'
+        sh 'kubectl apply -f k8s/service.yaml'
         sh 'kubectl rollout status deployment/node-app'
         sh 'kubectl apply -f k8s/canary-deployment.yml'
       }
