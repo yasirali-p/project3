@@ -27,7 +27,7 @@ app.get('/user/:id', (req, res) => {
   });
 });
 
-// Start the server
-app.listen(3000, '0.0.0.0', () => {
-  console.log('Server is running');
+// Start server listening on 0.0.0.0 so it can be accessed externally
+app.listen(port, '0.0.0.0', () => {
+  console.log(`Server running at http://0.0.0.0:${port}/`);
 });
