@@ -2,15 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: node-app
-  labels:
-    app: node-app
 spec:
-  strategy:
-    type: RollingUpdate
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 0
-  replicas: 3
+  replicas: 1
   selector:
     matchLabels:
       app: node-app
@@ -18,18 +11,13 @@ spec:
     metadata:
       labels:
         app: node-app
-        track: stable
+      annotations:
+        prometheus.io/scrape: 'true'
+        prometheus.io/path: '/metrics'
+        prometheus.io/port: '3000'
     spec:
       containers:
-      - name: my-node-app
-        image: yasir1510/nodeimage:latest 
-        ports:
-        - containerPort: 3000
-  strategy:
-    canary:
-      steps:
-        - setWeight: 25
-        - pause: { duration: 30s }
-        - setWeight: 50
-        - pause: { duration: 30s }
-        - setWeight: 100
+        - name: node-app
+          image: yasir1510/node-app:latest
+          ports:
+            - containerPort: 3000
