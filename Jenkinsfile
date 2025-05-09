@@ -2,7 +2,7 @@ pipeline {
   agent any
 
   environment {
-    DOCKER_CREDENTIALS_ID = 'ca43f1a1-4472-4147-aeda-cca85209efce'
+    DOCKER_CREDENTIALS_ID = 'cb8c2f47-f8b0-4331-aa28-2c6e9ac9d088'
     IMAGE_NAME = 'yasir1510/node-app'
     KUBECONFIG = '/var/lib/jenkins/.kube/config' // ✅ Fix added here
   }
@@ -27,8 +27,8 @@ pipeline {
         withCredentials([
           usernamePassword(
             credentialsId: "${DOCKER_CREDENTIALS_ID}",
-            usernameVariable: 'yasir1510',
-            passwordVariable: 'ca43f1a1-4472-4147-aeda-cca85209efce'
+            usernameVariable: 'DOCKER_USER',
+            passwordVariable: 'DOCKER_PASS'
           )
         ]) {
           script {
