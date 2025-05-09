@@ -22,6 +22,6 @@ app.get('/user/:id', (req, res) => {
 });
 
 // Start the server
-app.listen(port, () => {
-  console.log(`Server is running on http://172.16.88.104:${port}`);
+app.listen(port, '0.0.0.0', () => {
+  console.log(`server running on port ${port}`);
 });
